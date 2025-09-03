@@ -1,2 +1,2 @@
 # KnightJumps
-This repository is dedicated to answering some questions along the lines of: Can a knight visit all chess squares? What's the minimum jumps required? 
+Repository dedicated to an implementation of the Warnsdorf's Rule, together with a visualization of the tour's progress.
