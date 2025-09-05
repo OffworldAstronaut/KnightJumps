@@ -4,6 +4,9 @@
 
 import numpy as np                  # Arrays and other numerical utilities
 from typing import List, Tuple      # Typing
+from tabulate import tabulate       # Pretty-printing
+import os                           # System utilies
+import time                         # time utilies
 
 # Classes
 
@@ -43,12 +46,12 @@ class Knight:
 
 # Represents a chessboard -- also works as the environment for the Tour
 class Board:
-    def __init__(self, start_row: int, start_col: int) -> None:
+    def __init__(self, start_row: int=0, start_col: int=0) -> None:
         """Creates a chessboard and the environment of the Tour
 
         Args:
-            start_row (int): starting row coordinates for the Knight
-            start_col (int): starting col coordinates for the Knight
+            start_row (int): starting row coordinates for the Knight. Defaults to 0
+            start_col (int): starting col coordinates for the Knight. Defaults to 0
         """
         # "board" to store all the accessibility counting necessary to Warnsdorf's
         self.warnsdorf_board = np.zeros(shape=(8, 8), dtype=int)
@@ -78,40 +81,48 @@ class Board:
         return 0 <= row < 8 and 0 <= col < 8 and not self.already_visited[row, col]
         
     def get_accessibility(self, row: int, col: int) -> int:
-        """
+        """Calculates and return the accessible moves number for each tile
 
         Args:
-            row (int): _description_
-            col (int): _description_
+            row (int): tile row coordinate
+            col (int): tile col coordinate 
 
         Returns:
-            int: _description_
+            int: accessible moves count
         """
         accessibility_count = 0
         temp_knight = Knight(row, col)
+        # Get all possible moves, only counts the valid ones
         for r, c in temp_knight.get_possible_moves():
             if self.is_valid_move(r, c):
                 accessibility_count += 1
                 
         return accessibility_count
         
-    def run_tour(self) -> bool:
-        """_summary_
+    def run_tour(self, all_visited: bool=True) -> bool:
+        """Runs the Knight's Tour, stores in the path atribute all the Knight's moves
+
+        Args:
+            all_visited (bool): if True, prints all the visited tiles; False returns only the current 
+            tile visited by the Knight; Defaults to True.
 
         Returns:
-            bool: _description_
+            bool: Returns True if the Tour's completed. False if not.
         """
+        # The tour is for every tile in the board
         while self.visited_count < 64:
-            current_pos = (self.knight.row, self.knight.col)
+            # Stores the valid next moves
             valid_next_moves = []
             for r, c in self.knight.get_possible_moves():
                 if self.is_valid_move(r, c): 
                     valid_next_moves.append((r, c))
                     
+            # If there are none, the tour failed. 
             if not valid_next_moves:
                 print("Knight tour failed. Stuck.")
                 return False
             
+            # Calculates the best move according to the Rule -- the one with smaller accessibility
             best_move = None
             min_accessibility = 9
             
@@ -121,10 +132,32 @@ class Board:
                     min_accessibility = accessibility
                     best_move = move
                     
+            # Moves the knight to the best tile found 
             self.knight.row, self.knight.col = best_move
+            # Marks the visited tile as already visited
             self.already_visited[best_move[0], best_move[1]] = True
+            # Registers the new tile in the path 
             self.path.append(best_move)
+            # Updates the visited count
             self.visited_count += 1
             
+            if all_visited:
+                self.print_visited_board()
+            else:
+                self.print_current_board()
+            
+        # Tour completed
         print("Knight tour completed.")
         return True
+    
+    def print_current_board(self):
+        time.sleep(0.5)
+        os.system("clear")
+        empty_board = np.zeros(shape=(8, 8), dtype=bool)
+        empty_board[self.knight.row, self.knight.col] = True
+        print(tabulate(empty_board, tablefmt="fancy_grid"))
+        
+    def print_visited_board(self):
+        time.sleep(0.5)
+        os.system("clear")
+        print(tabulate(self.already_visited, tablefmt="fancy_grid"))
